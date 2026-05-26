@@ -6,8 +6,8 @@ import argparse
 import json
 from pathlib import Path
 
-import migrate_paths
-import paths
+from nanoka import paths
+from nanoka import migrate_paths
 
 
 class TestNormalizeLocalPath:

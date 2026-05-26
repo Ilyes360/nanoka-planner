@@ -1,0 +1,26 @@
+{
+  "name": "nanoka-genshin-scraper",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Scrape et post-traitement des données Genshin Impact depuis gi.nanoka.cc",
+  "scripts": {
+    "test": "pytest",
+    "test:verbose": "pytest -v",
+    "test:cov": "pytest --cov=nanoka --cov-report=term-missing",
+    "scrape": "python -m nanoka.scrape",
+    "scrape:quick": "python -m nanoka.scrape --max-characters 3 --max-weapons 3 --max-items 20 --skip-image-download",
+    "assign": "python -m nanoka.assign",
+    "report": "python -m nanoka.ascension_report --print",
+    "migrate:paths": "python -m nanoka.migrate_paths",
+    "docker:build": "docker compose build",
+    "docker:scrape": "docker compose run --rm scrape -m nanoka.scrape",
+    "docker:assign": "docker compose run --rm pipeline -m nanoka.assign",
+    "docker:report": "docker compose run --rm pipeline -m nanoka.ascension_report --print",
+    "docker:full": "docker compose --profile full up scrape post-process",
+    "security": "trivy fs --config .trivy.yaml .",
+    "security:scan": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/trivy-scan.ps1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

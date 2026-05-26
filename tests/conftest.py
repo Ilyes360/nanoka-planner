@@ -3,14 +3,9 @@
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 
 import pytest
-
-SRC = Path(__file__).resolve().parents[1] / "src"
-if str(SRC) not in sys.path:
-    sys.path.insert(0, str(SRC))
 
 
 @pytest.fixture
@@ -119,6 +114,6 @@ def items_catalog(sample_item: dict, sample_item_by_name: dict) -> list[dict]:
 
 @pytest.fixture
 def item_lookup(items_catalog: list[dict]):
-    import assign
+    from nanoka import assign
 
     return assign.build_item_lookup(items_catalog)

@@ -7,8 +7,8 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-import scrape
-from scrape import AscensionItem, ScrapedEntry
+from nanoka import scrape
+from nanoka.scrape import AscensionItem, ScrapedEntry
 
 
 class TestSlugify:

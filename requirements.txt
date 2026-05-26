@@ -1,6 +1,2 @@
-# Add your dependencies here
-selenium
-webdriver-manager
-
-# Tests
-pytest>=8.0
+# Dépendances locales (équivalent à requirements-dev.txt)
+-r requirements-dev.txt

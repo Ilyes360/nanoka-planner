@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from paths import (
+from nanoka.paths import (
     CHARACTER_ITEMS_JSON,
     CHARACTER_LOADOUTS_JSON,
     CHARACTERS_JSON,

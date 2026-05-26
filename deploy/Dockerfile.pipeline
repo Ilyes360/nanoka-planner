@@ -1,0 +1,27 @@
+# syntax=docker/dockerfile:1
+# Pipeline post-scrape : assign, ascension_report (stdlib Python uniquement).
+
+FROM python:3.12-alpine
+
+WORKDIR /app
+
+ENV PYTHONPATH=/app \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    HOME=/home/app
+
+RUN addgroup -g 1000 -S app \
+    && adduser -u 1000 -G app -S -h /home/app -D app \
+    && mkdir -p /app/data/raw /app/data/processed /app/data/images/characters \
+        /app/data/images/weapons /app/data/images/items \
+    && chown -R app:app /app /home/app
+
+COPY --chown=1000:1000 nanoka/ ./nanoka/
+COPY --chown=1000:1000 pytest.ini .
+
+USER 1000:1000
+
+VOLUME ["/app/data"]
+
+ENTRYPOINT ["python"]
+CMD ["-m", "nanoka.ascension_report", "--help"]

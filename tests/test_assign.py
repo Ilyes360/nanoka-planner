@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import assign
+from nanoka import assign
 import pytest
 
 

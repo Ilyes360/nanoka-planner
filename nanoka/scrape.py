@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -14,7 +15,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 
-from paths import (
+from nanoka.paths import (
     CHARACTER_IMAGES,
     CHARACTER_ITEMS_JSON,
     CHARACTERS_JSON,
@@ -80,17 +81,30 @@ def extract_ids_from_listing(url: str, kind: str) -> list[str]:
     return sorted(set(re.findall(rf"/{kind}/(\d+)/?", html)))
 
 
+def create_chrome_driver(options: Options) -> webdriver.Chrome:
+    chrome_bin = os.environ.get("CHROME_BIN", "").strip()
+    driver_bin = os.environ.get("CHROMEDRIVER_PATH", "").strip()
+    if chrome_bin:
+        options.binary_location = chrome_bin
+    if driver_bin:
+        service = Service(executable_path=driver_bin)
+    else:
+        service = Service(ChromeDriverManager().install())
+    return webdriver.Chrome(service=service, options=options)
+
+
 def extract_ids_with_selenium(url: str, kind: str) -> list[str]:
     options = Options()
     options.add_argument("--headless=new")
     options.add_argument("--window-size=1920,1080")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
     options.add_argument(
         "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
         "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
     )
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    driver = create_chrome_driver(options)
     try:
         driver.get(url)
         driver.implicitly_wait(WAIT_MS / 1000)

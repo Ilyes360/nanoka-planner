@@ -1,0 +1,41 @@
+# Configuration Trivy — https://trivy.dev/docs/latest/references/configuration/config-file/
+# Usage : trivy fs .   (lit ce fichier par défaut)
+
+scan:
+  scanners:
+    - vuln
+    - secret
+    - misconfig
+  # Glob pip:requirements*.txt ne matche pas sous Windows — fichiers explicites
+  file-patterns:
+    - "pip:requirements.txt"
+    - "pip:requirements-scraper.txt"
+    - "pip:requirements-dev.txt"
+  detection-priority: comprehensive
+  skip-dirs:
+    - .venv
+    - .git
+    - .pytest_cache
+    - __pycache__
+    - data
+    - .mypy_cache
+    - .idea
+    - .vscode
+
+severity:
+  - CRITICAL
+  - HIGH
+  - MEDIUM
+  - LOW
+  - UNKNOWN
+
+format: table
+exit-code: 1
+exit-on-eol: 0
+
+vulnerability:
+  ignore-unfixed: false
+
+misconfiguration:
+  scanners:
+    - dockerfile

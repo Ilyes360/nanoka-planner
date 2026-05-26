@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import paths
+from nanoka import paths
 
 
 def test_root_is_project_directory(project_root: Path) -> None:

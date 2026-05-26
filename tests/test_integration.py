@@ -5,8 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import ascension_report
-import assign
+from nanoka import ascension_report, assign
 
 
 def test_assign_then_ascension_report_pipeline(

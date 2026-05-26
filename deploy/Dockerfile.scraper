@@ -1,0 +1,48 @@
+# syntax=docker/dockerfile:1
+# Scrape Nanoka (Selenium + Chromium headless).
+
+FROM python:3.12-alpine AS builder
+
+WORKDIR /build
+RUN apk add --no-cache gcc musl-dev libffi-dev
+COPY requirements-scraper.txt .
+RUN pip install --no-cache-dir --prefix=/install -r requirements-scraper.txt
+
+FROM python:3.12-alpine
+
+WORKDIR /app
+
+ENV PYTHONPATH=/app \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    HOME=/home/app \
+    CHROME_BIN=/usr/bin/chromium-browser \
+    CHROMEDRIVER_PATH=/usr/bin/chromedriver \
+    XDG_CACHE_HOME=/home/app/.cache \
+    CHROMIUM_FLAGS="--disable-software-rasterizer --disable-dev-shm-usage"
+
+RUN apk add --no-cache \
+        chromium \
+        chromium-chromedriver \
+        nss \
+        freetype \
+        harfbuzz \
+        ca-certificates \
+        ttf-freefont \
+        udev \
+    && addgroup -g 1000 -S app \
+    && adduser -u 1000 -G app -S -h /home/app -D app \
+    && mkdir -p /app/data/raw /app/data/processed /app/data/images/characters \
+        /app/data/images/weapons /app/data/images/items \
+        /home/app/.cache/chromium \
+    && chown -R app:app /app /home/app
+
+COPY --from=builder /install /usr/local
+COPY --chown=1000:1000 nanoka/ ./nanoka/
+
+USER 1000:1000
+
+VOLUME ["/app/data"]
+
+ENTRYPOINT ["python"]
+CMD ["-m", "nanoka.scrape", "--help"]

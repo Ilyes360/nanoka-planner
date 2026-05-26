@@ -5,6 +5,7 @@ __pycache__/
 .mypy_cache/
 .idea/
 .vscode/
+node_modules/
 
 # Données volumineuses (générées par le scrape)
 data/raw/*.json

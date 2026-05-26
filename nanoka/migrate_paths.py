@@ -7,7 +7,7 @@ import json
 import re
 from pathlib import Path
 
-from paths import LEGACY_IMAGE_DIRS, RAW, ROOT
+from nanoka.paths import LEGACY_IMAGE_DIRS, RAW, ROOT
 
 _LOCAL_PATH_RE = re.compile(r'"local_path": "([^"]*)"')
 
