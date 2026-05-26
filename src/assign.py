@@ -115,10 +115,12 @@ def character_loadout(char: dict, by_id: dict[int, dict], by_name: dict[str, dic
             if isinstance(step, dict):
                 levels.append({"level": level_idx, **enrich_step(step, by_id, by_name)})
         talents.append({"track": track_idx, "levels": levels})
+    level_exp = (char.get("raw_data") or {}).get("level_exp") or []
     return {
         "name": char.get("name", ""),
         "id": entity_id(char.get("url", ""), "character"),
         "url": char.get("url", ""),
+        "level_exp": level_exp if isinstance(level_exp, list) else [],
         "ascensions": ascensions,
         "talents": talents,
     }

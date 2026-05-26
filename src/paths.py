@@ -22,6 +22,7 @@ CHARACTER_ITEMS_JSON = PROCESSED / "character_items_nanoka.json"
 WEAPON_ITEMS_JSON = PROCESSED / "weapon_items_nanoka.json"
 CHARACTER_LOADOUTS_JSON = PROCESSED / "character_loadouts.json"
 WEAPON_LOADOUTS_JSON = PROCESSED / "weapon_loadouts.json"
+CHARACTER_ASCENSION_REPORT_JSON = PROCESSED / "character_ascension_materials.json"
 
 LEGACY_IMAGE_DIRS: dict[str, Path] = {
     "downloaded_character_images": CHARACTER_IMAGES,

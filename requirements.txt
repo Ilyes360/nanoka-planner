@@ -1,3 +1,6 @@
 # Add your dependencies here
 selenium
 webdriver-manager
+
+# Tests
+pytest>=8.0

@@ -47,10 +47,14 @@ def rewrite_file(path: Path, dry_run: bool = False) -> int:
     return 1
 
 
-def main() -> None:
+def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Réécrit les chemins d'images dans les JSON.")
     p.add_argument("--dry-run", action="store_true")
-    args = p.parse_args()
+    return p.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
     targets = list(RAW.glob("*.json"))
     updated = 0
     for f in targets:
