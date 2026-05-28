@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from nanoka.exp_books import books_for_exp, exp_block, exp_for_level_range
+from nanoka.exp_books import exp_block
 from nanoka.paths import CHARACTER_ASCENSION_REPORT_JSON, CHARACTER_LOADOUTS_JSON, CHARACTERS_JSON, ensure_data_dirs
 
 # Phases d'ascension Genshin (6 paliers jusqu'au niv. 90)

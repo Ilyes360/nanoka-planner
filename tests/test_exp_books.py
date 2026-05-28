@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from nanoka.exp_books import EXP_BOOKS, books_for_exp, exp_block, exp_for_level_range
+from nanoka.exp_books import books_for_exp, exp_block, exp_for_level_range
 
 
 @pytest.fixture
