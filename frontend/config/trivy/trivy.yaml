@@ -1,0 +1,32 @@
+# Trivy config — frontend (npm + Docker)
+# Usage: trivy fs --config config/trivy/trivy.yaml .
+
+scan:
+  scanners:
+    - vuln
+    - secret
+    - misconfig
+  skip-dirs:
+    - node_modules
+    - dist
+    - .git
+    - .idea
+    - .vscode
+
+severity:
+  - CRITICAL
+  - HIGH
+  - MEDIUM
+  - LOW
+  - UNKNOWN
+
+format: table
+exit-code: 1
+exit-on-eol: 0
+
+vulnerability:
+  ignore-unfixed: false
+
+misconfiguration:
+  scanners:
+    - dockerfile

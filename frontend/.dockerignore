@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.git/
+.github/
+.pytest_cache/
+.idea/
+.vscode/
+*.md
+!README.md
+
+deploy/docker-compose*.yml
+.dockerignore
