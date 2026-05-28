@@ -15,6 +15,6 @@ data/processed/*.json
 data/images/**/*
 
 deploy/Dockerfile*
-docker-compose*.yml
+deploy/docker-compose*.yml
 .dockerignore
 src/

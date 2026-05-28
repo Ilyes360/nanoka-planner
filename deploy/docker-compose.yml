@@ -1,23 +1,23 @@
 services:
   scrape:
     build:
-      context: .
+      context: ..
       dockerfile: deploy/Dockerfile.scraper
     image: nanoka-scraper:latest
     user: "1000:1000"
     volumes:
-      - ./data:/app/data
+      - ../data:/app/data
     working_dir: /app
     shm_size: "2gb"
 
   pipeline:
     build:
-      context: .
+      context: ..
       dockerfile: deploy/Dockerfile.pipeline
     image: nanoka-pipeline:latest
     user: "1000:1000"
     volumes:
-      - ./data:/app/data
+      - ../data:/app/data
     working_dir: /app
 
   post-process:
@@ -28,7 +28,7 @@ services:
       scrape:
         condition: service_completed_successfully
     volumes:
-      - ./data:/app/data
+      - ../data:/app/data
     working_dir: /app
     command: >
       sh -c "python -m nanoka.assign && python -m nanoka.ascension_report && python -m nanoka.weapon_report && python -m nanoka.talent_report"

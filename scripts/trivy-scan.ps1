@@ -12,6 +12,9 @@ if ($PSVersionTable.PSVersion.Major -ge 7) {
 $Root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 Set-Location $Root
 
+$TrivyConfig = "config/trivy/trivy.yaml"
+$ComposeFile = "deploy/docker-compose.yml"
+
 function Find-TrivyExecutable {
     $cmd = Get-Command trivy -ErrorAction SilentlyContinue
     if ($cmd) { return $cmd.Source }
@@ -26,7 +29,7 @@ function Find-TrivyExecutable {
     $cmd = Get-Command trivy -ErrorAction SilentlyContinue
     if ($cmd) { return $cmd.Source }
 
-  $wingetRoot = Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Packages"
+    $wingetRoot = Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Packages"
     if (Test-Path $wingetRoot) {
         $found = Get-ChildItem -Path $wingetRoot -Filter "trivy.exe" -Recurse -ErrorAction SilentlyContinue |
             Select-Object -First 1
@@ -46,31 +49,31 @@ Trivy introuvable.
 3. Relancez : .\scripts\trivy-scan.ps1
 
 Ou lancez directement (remplacez le chemin si besoin) :
-  & "$env:LOCALAPPDATA\Microsoft\WinGet\Packages\AquaSecurity.Trivy_Microsoft.Winget.Source_8wekyb3d8bbwe\trivy.exe" fs --config .trivy.yaml .
+  & "$env:LOCALAPPDATA\Microsoft\WinGet\Packages\AquaSecurity.Trivy_Microsoft.Winget.Source_8wekyb3d8bbwe\trivy.exe" fs --config $TrivyConfig .
 "@
 }
 
 Write-Host "Trivy : $Trivy" -ForegroundColor DarkGray
 
 Write-Host "==> Dépendances Python (requirements)" -ForegroundColor Cyan
-& $Trivy fs --config .trivy.yaml --scanners vuln --severity CRITICAL,HIGH,MEDIUM .
+& $Trivy fs --config $TrivyConfig --scanners vuln --severity CRITICAL,HIGH,MEDIUM .
 
 Write-Host "`n==> Code + secrets + misconfig" -ForegroundColor Cyan
-& $Trivy fs --config .trivy.yaml --scanners secret,misconfig --severity CRITICAL,HIGH,MEDIUM .
+& $Trivy fs --config $TrivyConfig --scanners secret,misconfig --severity CRITICAL,HIGH,MEDIUM .
 
 Write-Host "`n==> Docker / compose (misconfig)" -ForegroundColor Cyan
-& $Trivy config --severity CRITICAL,HIGH,MEDIUM deploy/Dockerfile.pipeline deploy/Dockerfile.scraper docker-compose.yml
+& $Trivy config --severity CRITICAL,HIGH,MEDIUM deploy/Dockerfile.pipeline deploy/Dockerfile.scraper $ComposeFile
 
 if ($Image) {
     if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
         Write-Error "Docker requis pour -Image. Démarrez Docker Desktop puis relancez."
     }
     Write-Host "`n==> Build + scan image pipeline" -ForegroundColor Cyan
-    docker compose build pipeline
+    docker compose -f $ComposeFile build pipeline
     & $Trivy image --severity CRITICAL,HIGH,MEDIUM nanoka-pipeline:latest
 
     Write-Host "`n==> Build + scan image scraper" -ForegroundColor Cyan
-    docker compose build scrape
+    docker compose -f $ComposeFile build scrape
     & $Trivy image --severity CRITICAL,HIGH,MEDIUM nanoka-scraper:latest
 }
 
