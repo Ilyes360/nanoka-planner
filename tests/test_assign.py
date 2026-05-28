@@ -132,6 +132,12 @@ class TestCharacterLoadout:
 
 
 class TestWeaponLoadout:
+    def test_weapon_level_exp_from_xp_requirements(self, sample_weapon_raw: dict, item_lookup) -> None:
+        by_id, by_name = item_lookup
+        out = assign.weapon_loadout(sample_weapon_raw, by_id, by_name)
+        assert len(out["level_exp"]) == 90
+        assert out["level_exp"][0] == 1000
+
     def test_phases_sorted(self, sample_weapon_raw: dict, item_lookup) -> None:
         by_id, by_name = item_lookup
         out = assign.weapon_loadout(sample_weapon_raw, by_id, by_name)

@@ -54,3 +54,4 @@ class TestExpBlock:
         assert block["to_level"] == 20
         assert block["total_exp"] == 19_000
         assert block["book_count"] > 0
+

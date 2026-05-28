@@ -1,4 +1,4 @@
-"""Calcul des livres d'experience requis a partir du tableau level_exp."""
+"""Calcul des livres d'experience personnages a partir du tableau level_exp."""
 
 from __future__ import annotations
 

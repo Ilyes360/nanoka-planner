@@ -31,6 +31,8 @@ def test_assign_then_ascension_report_pipeline(
     w_report = weapon_report.build_weapon_report(weapon_loadout)
     assert w_report["name"] == "Test Sword"
     assert w_report["ascensions"]
+    assert w_report["ascensions"][0].get("leveling")
+    assert w_report["enhancement_ores_total"]
 
     t_report = talent_report.build_talent_report(loadout)
     assert t_report["name"] == "Tester"

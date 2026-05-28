@@ -67,10 +67,11 @@ def sample_weapon_raw() -> dict:
         "name": "Test Sword",
         "url": "https://gi.nanoka.cc/weapon/11401",
         "raw_data": {
+            "xp_requirements": {str(i): 1000 for i in range(1, 91)},
             "materials": {
                 "1": {"cost": 500, "mats": [{"name": "Mora", "id": 202, "count": 1}]},
                 "2": {"cost": 1500, "mats": [{"name": "Unknown Ore", "id": 999999, "count": 4}]},
-            }
+            },
         },
     }
 

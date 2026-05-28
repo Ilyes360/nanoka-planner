@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+from nanoka.weapon_exp import parse_level_exp
 from nanoka.paths import (
     CHARACTER_ITEMS_JSON,
     CHARACTER_LOADOUTS_JSON,
@@ -127,7 +128,9 @@ def character_loadout(char: dict, by_id: dict[int, dict], by_name: dict[str, dic
 
 
 def weapon_loadout(weapon: dict, by_id: dict[int, dict], by_name: dict[str, dict]) -> dict:
-    materials = (weapon.get("raw_data") or {}).get("materials") or {}
+    raw = weapon.get("raw_data") or {}
+    materials = raw.get("materials") or {}
+    level_exp = parse_level_exp(raw)
     phases = []
     if isinstance(materials, dict):
         for key, step in sorted(materials.items(), key=lambda x: int(x[0]) if str(x[0]).isdigit() else x[0]):
@@ -137,6 +140,7 @@ def weapon_loadout(weapon: dict, by_id: dict[int, dict], by_name: dict[str, dict
         "name": weapon.get("name", ""),
         "id": entity_id(weapon.get("url", ""), "weapon"),
         "url": weapon.get("url", ""),
+        "level_exp": level_exp if level_exp else [],
         "ascensions": phases,
     }
 
