@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from nanoka import ascension_report, assign
+from nanoka import ascension_report, assign, talent_report, weapon_report
 
 
 def test_assign_then_ascension_report_pipeline(
@@ -27,6 +27,14 @@ def test_assign_then_ascension_report_pipeline(
             if mat["name"] == "Mora":
                 assert mat["item_id"] == 202
                 assert mat["count"] > 0
+    weapon_loadout = assign.weapon_loadout(sample_weapon_raw, by_id, by_name)
+    w_report = weapon_report.build_weapon_report(weapon_loadout)
+    assert w_report["name"] == "Test Sword"
+    assert w_report["ascensions"]
+
+    t_report = talent_report.build_talent_report(loadout)
+    assert t_report["name"] == "Tester"
+    assert t_report["talents"]
 
 
 def test_full_assign_outputs_loadable_by_report(
@@ -50,3 +58,18 @@ def test_full_assign_outputs_loadable_by_report(
 
     loaded = json.loads(out.read_text(encoding="utf-8"))
     assert loaded[0]["totals"]
+
+
+def test_build_all_weapon_and_talent_reports(
+    sample_character_raw: dict,
+    sample_weapon_raw: dict,
+    items_catalog: list[dict],
+) -> None:
+    by_id, by_name = assign.build_item_lookup(items_catalog)
+    char_loadout = assign.character_loadout(sample_character_raw, by_id, by_name)
+    weapon_loadout = assign.weapon_loadout(sample_weapon_raw, by_id, by_name)
+
+    weapon_reports = weapon_report.build_all_weapon_reports([weapon_loadout])
+    talent_reports = talent_report.build_all_talent_reports([char_loadout])
+    assert weapon_reports[0]["name"] == "Test Sword"
+    assert talent_reports[0]["name"] == "Tester"

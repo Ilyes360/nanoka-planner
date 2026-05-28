@@ -1,14 +1,19 @@
-"""Rapport des matériaux d'ascension par personnage et par phase."""
+"""Rapport de planification des ascensions personnages."""
 
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 from typing import Any
 
 from nanoka.exp_books import exp_block
-from nanoka.paths import CHARACTER_ASCENSION_REPORT_JSON, CHARACTER_LOADOUTS_JSON, CHARACTERS_JSON, ensure_data_dirs
+from nanoka.report_common import load_json, slim_material, write_json
+from nanoka.paths import (
+    CHARACTER_ASCENSION_REPORT_JSON,
+    CHARACTER_LOADOUTS_JSON,
+    CHARACTERS_JSON,
+    ensure_data_dirs,
+)
 
 # Phases d'ascension Genshin (6 paliers jusqu'au niv. 90)
 ASCENSION_PHASES: list[dict[str, int | str]] = [
@@ -19,16 +24,6 @@ ASCENSION_PHASES: list[dict[str, int | str]] = [
     {"phase": 5, "at_level": 70, "new_level_cap": 80},
     {"phase": 6, "at_level": 80, "new_level_cap": 90},
 ]
-
-
-def load_json(path: Path) -> Any:
-    return json.loads(path.read_text(encoding="utf-8"))
-
-
-def write_json(path: Path, data: Any) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-
 
 def phase_meta(phase: int) -> dict[str, int | str]:
     for row in ASCENSION_PHASES:
@@ -66,23 +61,11 @@ def resolve_level_exp(char: dict, level_exp_index: dict[str, list[int]]) -> list
     return level_exp_index.get(cid, [])
 
 
-def slim_material(mat: dict) -> dict:
-    item = mat.get("item") or {}
-    return {
-        "name": mat.get("name", ""),
-        "count": int(mat.get("count") or 0),
-        "item_id": item.get("item_id") or mat.get("id"),
-        "icon_url": item.get("icon_url", ""),
-    }
-
-
 def build_character_report(char: dict, level_exp_index: dict[str, list[int]] | None = None) -> dict:
     level_exp_index = level_exp_index or {}
     level_exp = resolve_level_exp(char, level_exp_index)
 
     phases_out: list[dict] = []
-    totals: dict[str, int] = {}
-    total_mora = 0
     exp_book_totals: dict[str, int] = {}
 
     for step in char.get("ascensions") or []:
@@ -92,12 +75,6 @@ def build_character_report(char: dict, level_exp_index: dict[str, list[int]] | N
         meta = phase_meta(phase)
         materials = [slim_material(m) for m in step.get("materials") or [] if isinstance(m, dict)]
         mora = int(step.get("cost") or 0)
-        total_mora += mora
-
-        for m in materials:
-            key = m["name"]
-            totals[key] = totals.get(key, 0) + m["count"]
-
         from_level = prev_ascension_level(phase)
         to_level = int(meta["at_level"])
         exp_info = exp_block(level_exp, from_level, to_level) if level_exp else None
@@ -123,6 +100,15 @@ def build_character_report(char: dict, level_exp_index: dict[str, list[int]] | N
 
     max_level = int(ASCENSION_PHASES[-1]["new_level_cap"]) if ASCENSION_PHASES else 90
     exp_to_max = exp_block(level_exp, 1, max_level) if level_exp else None
+    totals: dict[str, int] = {}
+    total_mora = 0
+    for step in phases_out:
+        total_mora += int(step.get("mora") or 0)
+        for mat in step.get("materials") or []:
+            key = str(mat.get("name", "")).strip()
+            if not key:
+                continue
+            totals[key] = totals.get(key, 0) + int(mat.get("count") or 0)
 
     return {
         "name": char.get("name", ""),
@@ -143,7 +129,6 @@ def build_all_reports(loadouts: list[dict], level_exp_index: dict[str, list[int]
         [build_character_report(c, level_exp_index) for c in loadouts if isinstance(c, dict)],
         key=lambda x: str(x.get("name", "")).lower(),
     )
-
 
 def print_character_report(report: dict) -> None:
     print(f"\n{'=' * 60}")
@@ -182,7 +167,7 @@ def print_character_report(report: dict) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Matériaux d'ascension par personnage et par phase.")
+    p = argparse.ArgumentParser(description="Rapport de planification des ascensions personnages.")
     p.add_argument("--loadouts", type=Path, default=CHARACTER_LOADOUTS_JSON)
     p.add_argument("--characters", type=Path, default=CHARACTERS_JSON, help="JSON bruts (level_exp)")
     p.add_argument("--out", type=Path, default=CHARACTER_ASCENSION_REPORT_JSON)
@@ -204,14 +189,14 @@ def main() -> None:
         reports = [r for r in reports if needle in str(r.get("name", "")).lower()]
 
     write_json(args.out, reports)
-    print(f"Rapport : {len(reports)} personnage(s) -> {args.out.resolve()}")
+    print(f"Rapport ascension personnages : {len(reports)} -> {args.out.resolve()}")
 
     if args.show:
-        if not reports:
+        if reports:
+            for report in reports:
+                print_character_report(report)
+        else:
             print("Aucun personnage trouve.")
-            return
-        for report in reports:
-            print_character_report(report)
 
 
 if __name__ == "__main__":

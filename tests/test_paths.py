@@ -21,6 +21,8 @@ def test_data_paths_under_root(project_root: Path) -> None:
 def test_json_output_paths() -> None:
     assert paths.CHARACTERS_JSON.name == "characters_nanoka.json"
     assert paths.CHARACTER_ASCENSION_REPORT_JSON.parent == paths.PROCESSED
+    assert paths.WEAPON_ASCENSION_REPORT_JSON.parent == paths.PROCESSED
+    assert paths.CHARACTER_TALENT_REPORT_JSON.parent == paths.PROCESSED
 
 
 def test_legacy_image_dirs_map_to_new_folders() -> None:

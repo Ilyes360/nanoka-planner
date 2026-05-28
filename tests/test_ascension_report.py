@@ -134,7 +134,7 @@ class TestAscensionReportMain:
         data = json.loads(out.read_text(encoding="utf-8"))
         assert len(data) == 1
         assert data[0]["name"] == "Tester"
-        assert "1 personnage" in capsys.readouterr().out
+        assert "Rapport ascension personnages" in capsys.readouterr().out
 
     def test_print_no_match(self, tmp_path: Path, monkeypatch, capsys) -> None:
         loadouts = tmp_path / "loadouts.json"

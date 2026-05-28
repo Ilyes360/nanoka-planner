@@ -121,6 +121,7 @@ class TestCharacterLoadout:
         assert len(out["ascensions"][0]["materials"]) == 2
         assert len(out["talents"]) == 1
         assert len(out["talents"][0]["levels"]) == 1
+        assert out["talents"][0]["levels"][0]["level"] == 1
 
     def test_missing_materials(self, item_lookup) -> None:
         by_id, by_name = item_lookup
