@@ -8,7 +8,9 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from nanoka.api import _is_displayable, _pick_character_avatar_file, _pick_character_splash_file, app
+from nanoka.api import _is_displayable, app
+from nanoka.media import pick_character_avatar_file as _pick_character_avatar_file
+from nanoka.media import pick_character_splash_file as _pick_character_splash_file
 
 
 @pytest.fixture

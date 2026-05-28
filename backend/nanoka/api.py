@@ -134,7 +134,3 @@ def reports_meta() -> dict[str, Any]:
         "weapon_loadouts": WEAPON_LOADOUTS_JSON.is_file(),
     }
 
-
-# Compat tests (anciens imports depuis api)
-from nanoka.media import pick_character_avatar_file as _pick_character_avatar_file
-from nanoka.media import pick_character_splash_file as _pick_character_splash_file

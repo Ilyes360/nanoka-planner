@@ -30,6 +30,7 @@ RUN apk add --no-cache \
         ca-certificates \
         ttf-freefont \
         udev \
+    && apk upgrade --no-cache \
     && addgroup -g 1000 -S app \
     && adduser -u 1000 -G app -S -h /home/app -D app \
     && mkdir -p /app/data/raw /app/data/processed /app/data/images/characters \

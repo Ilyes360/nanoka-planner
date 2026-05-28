@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from nanoka.paths import CHARACTER_IMAGES, IMAGES, WEAPON_IMAGES
+from nanoka.paths import IMAGES
 
 
 def media_url_from_path(path: Path | None) -> str | None:

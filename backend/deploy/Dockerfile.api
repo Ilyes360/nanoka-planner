@@ -11,6 +11,7 @@ ENV PYTHONPATH=/app \
     HOME=/home/app
 
 RUN apk add --no-cache wget \
+    && apk upgrade --no-cache \
     && addgroup -g 1000 -S app \
     && adduser -u 1000 -G app -S -h /home/app -D app \
     && mkdir -p /app/data/raw /app/data/processed /app/data/images/characters \
