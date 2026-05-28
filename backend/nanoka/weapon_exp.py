@@ -5,18 +5,20 @@ from __future__ import annotations
 from typing import TypedDict
 
 from nanoka.exp_books import exp_for_level_range
+from nanoka.item_icons import WEAPON_ORE_IDS, resolve_icon_url
 
 
 class EnhancementOreDef(TypedDict):
     name: str
     exp: int
+    item_id: int
 
 
 # Valeurs standard Genshin Impact
 WEAPON_ENHANCEMENT_ORES: list[EnhancementOreDef] = [
-    {"name": "Mystic Enhancement Ore", "exp": 10_000},
-    {"name": "Fine Enhancement Ore", "exp": 2_000},
-    {"name": "Enhancement Ore", "exp": 400},
+    {"name": "Mystic Enhancement Ore", "exp": 10_000, "item_id": WEAPON_ORE_IDS["Mystic Enhancement Ore"]},
+    {"name": "Fine Enhancement Ore", "exp": 2_000, "item_id": WEAPON_ORE_IDS["Fine Enhancement Ore"]},
+    {"name": "Enhancement Ore", "exp": 400, "item_id": WEAPON_ORE_IDS["Enhancement Ore"]},
 ]
 
 
@@ -54,6 +56,8 @@ def ores_for_exp(total_exp: int) -> dict:
                     "count": count,
                     "exp_per_ore": ore["exp"],
                     "exp_total": count * ore["exp"],
+                    "item_id": ore["item_id"],
+                    "icon_url": resolve_icon_url(item_id=ore["item_id"], name=ore["name"]),
                 }
             )
             ore_count += count

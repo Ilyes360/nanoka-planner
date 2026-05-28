@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from nanoka.exp_books import exp_block
-from nanoka.report_common import load_json, slim_material, write_json
+from nanoka.report_common import load_json, merge_material_row, slim_material, write_json
 from nanoka.paths import (
     CHARACTER_ASCENSION_REPORT_JSON,
     CHARACTER_LOADOUTS_JSON,
@@ -100,22 +100,20 @@ def build_character_report(char: dict, level_exp_index: dict[str, list[int]] | N
 
     max_level = int(ASCENSION_PHASES[-1]["new_level_cap"]) if ASCENSION_PHASES else 90
     exp_to_max = exp_block(level_exp, 1, max_level) if level_exp else None
-    totals: dict[str, int] = {}
+    totals: dict[str, dict] = {}
     total_mora = 0
     for step in phases_out:
         total_mora += int(step.get("mora") or 0)
         for mat in step.get("materials") or []:
-            key = str(mat.get("name", "")).strip()
-            if not key:
-                continue
-            totals[key] = totals.get(key, 0) + int(mat.get("count") or 0)
+            if isinstance(mat, dict):
+                merge_material_row(totals, mat)
 
     return {
         "name": char.get("name", ""),
         "id": char.get("id", ""),
         "url": char.get("url", ""),
         "ascensions": phases_out,
-        "totals": [{"name": n, "count": c} for n, c in sorted(totals.items(), key=lambda x: x[0].lower())],
+        "totals": sorted(totals.values(), key=lambda x: str(x["name"]).lower()),
         "total_mora": total_mora,
         "exp_books_total": [
             {"name": n, "count": c} for n, c in sorted(exp_book_totals.items(), key=lambda x: x[0].lower())

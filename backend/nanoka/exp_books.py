@@ -4,17 +4,20 @@ from __future__ import annotations
 
 from typing import TypedDict
 
+from nanoka.item_icons import CHARACTER_EXP_BOOK_IDS, resolve_icon_url
+
 
 class ExpBookDef(TypedDict):
     name: str
     exp: int
+    item_id: int
 
 
 # Valeurs standard Genshin Impact
 EXP_BOOKS: list[ExpBookDef] = [
-    {"name": "Hero's Wit", "exp": 20_000},
-    {"name": "Adventurer's Experience", "exp": 5_000},
-    {"name": "Wanderer's Advice", "exp": 1_000},
+    {"name": "Hero's Wit", "exp": 20_000, "item_id": CHARACTER_EXP_BOOK_IDS["Hero's Wit"]},
+    {"name": "Adventurer's Experience", "exp": 5_000, "item_id": CHARACTER_EXP_BOOK_IDS["Adventurer's Experience"]},
+    {"name": "Wanderer's Advice", "exp": 1_000, "item_id": CHARACTER_EXP_BOOK_IDS["Wanderer's Advice"]},
 ]
 
 
@@ -50,6 +53,8 @@ def books_for_exp(total_exp: int) -> dict:
                     "count": count,
                     "exp_per_book": book["exp"],
                     "exp_total": count * book["exp"],
+                    "item_id": book["item_id"],
+                    "icon_url": resolve_icon_url(item_id=book["item_id"], name=book["name"]),
                 }
             )
             book_count += count

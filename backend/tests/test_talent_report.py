@@ -26,7 +26,7 @@ def test_build_talent_report_tracks_and_totals() -> None:
     report = talent_report.build_talent_report(char)
     assert report["level_count"] == 2
     assert report["total_mora"] == 300
-    assert report["level_range"] == {"min": 2, "max": 10}
+    assert report["level_range"] == {"min": 1, "max": 10}
     assert {row["name"] for row in report["totals"]} == {"Book", "Slime"}
     track = report["talents"][0]
     assert track["track"] == 1
@@ -89,6 +89,69 @@ def test_talent_report_main_filter(tmp_path: Path, sample_character_raw: dict, i
     assert len(data) == 1
     assert data[0]["name"] == "Tester"
     assert "Rapport talents personnages" in capsys.readouterr().out
+
+
+def test_aggregate_talent_track_level_one_is_empty() -> None:
+    track = {
+        "track": 1,
+        "levels": [
+            {"level": 2, "mora": 100, "materials": [{"name": "Slime", "count": 2}]},
+            {"level": 3, "mora": 200, "materials": [{"name": "Book", "count": 1}]},
+        ],
+    }
+    row = talent_report.aggregate_talent_track(track, 1)
+    assert row["materials"] == []
+    assert row["total_mora"] == 0
+    assert row["target_level"] == 1
+
+
+def test_aggregate_talent_track_up_to_target_level() -> None:
+    track = {
+        "track": 2,
+        "levels": [
+            {"level": 2, "mora": 100, "materials": [{"name": "Slime", "count": 2}]},
+            {"level": 3, "mora": 200, "materials": [{"name": "Book", "count": 1}]},
+            {"level": 4, "mora": 300, "materials": [{"name": "Book", "count": 2}]},
+        ],
+    }
+    row = talent_report.aggregate_talent_track(track, 3)
+    assert row["total_mora"] == 300
+    assert {m["name"] for m in row["materials"]} == {"Book", "Slime"}
+    assert sum(m["count"] for m in row["materials"] if m["name"] == "Book") == 1
+
+
+def test_aggregate_talent_report_with_levels_per_track() -> None:
+    report = {
+        "talents": [
+            {
+                "track": 1,
+                "levels": [{"level": 2, "mora": 10, "materials": [{"name": "A", "count": 1}]}],
+            },
+            {
+                "track": 2,
+                "levels": [{"level": 2, "mora": 20, "materials": [{"name": "B", "count": 2}]}],
+            },
+            {
+                "track": 3,
+                "levels": [{"level": 2, "mora": 30, "materials": [{"name": "C", "count": 3}]}],
+            },
+        ],
+    }
+    plan = talent_report.aggregate_talent_report_with_levels(report, {1: 2, 2: 1, 3: 1})
+    assert plan["total"]["total_mora"] == 10
+    assert {m["name"] for m in plan["total"]["materials"]} == {"A"}
+    assert plan["tracks"][1]["total_mora"] == 0
+    assert plan["tracks"][2]["total_mora"] == 0
+
+
+def test_parse_talent_levels_param_comma_and_equals() -> None:
+    report = {"talents": [{"track": 1}, {"track": 2}, {"track": 3}]}
+    assert talent_report.parse_talent_levels_param("10,6,1", report) == {1: 10, 2: 6, 3: 1}
+    assert talent_report.parse_talent_levels_param("1=10,3=1", report) == {1: 10, 3: 1}
+
+
+def test_talent_levels_constant_matches_frontend() -> None:
+    assert talent_report.TALENT_LEVELS == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 
 def test_print_talent_report_outputs_levels_and_totals(capsys) -> None:

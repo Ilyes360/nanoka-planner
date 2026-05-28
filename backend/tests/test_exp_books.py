@@ -30,12 +30,13 @@ class TestBooksForExp:
 
     def test_greedy_heroes_wit(self) -> None:
         plan = books_for_exp(45_000)
-        assert plan["books"][0] == {
-            "name": "Hero's Wit",
-            "count": 2,
-            "exp_per_book": 20_000,
-            "exp_total": 40_000,
-        }
+        first = plan["books"][0]
+        assert first["name"] == "Hero's Wit"
+        assert first["count"] == 2
+        assert first["exp_per_book"] == 20_000
+        assert first["exp_total"] == 40_000
+        assert first["item_id"] == 104003
+        assert "104003" in first["icon_url"]
         assert plan["book_count"] == 2 + 1  # +1 adventurer
         assert plan["remainder_exp"] == 0
 

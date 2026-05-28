@@ -1,5 +1,6 @@
 # Analyse de sécurité Trivy (dépendances, secrets, Dockerfiles).
-# Usage : .\scripts\trivy-scan.ps1 [-Image]
+# Usage : .\backend\scripts\trivy-scan.ps1 [-Image]  (depuis la racine du repo)
+#         .\scripts\trivy-scan.ps1 [-Image]           (depuis backend/)
 
 param(
     [switch]$Image
