@@ -14,12 +14,14 @@ from nanoka.media import pick_character_splash_file as _pick_character_splash_fi
 
 
 def _patch_data_paths(monkeypatch: pytest.MonkeyPatch, **paths: Path) -> None:
-    from nanoka import data_store, paths as paths_mod
+    from nanoka import data_store, media, paths as paths_mod
 
     for name, value in paths.items():
         monkeypatch.setattr(paths_mod, name, value)
         if hasattr(data_store, name):
             monkeypatch.setattr(data_store, name, value)
+        if hasattr(media, name):
+            monkeypatch.setattr(media, name, value)
     data_store.clear_caches()
 
 
