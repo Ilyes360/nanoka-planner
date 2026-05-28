@@ -14,6 +14,8 @@ python-project/
 │   ├── tests/
 │   ├── scripts/
 │   └── deploy/               # Dockerfiles + docker-compose.yml
+├── deploy/
+│   └── docker-compose.stack.yml   # Stack runtime API → web
 └── frontend/                 # Interface web JavaScript (Vite)
     ├── src/
     ├── deploy/               # Dockerfile + docker-compose.yml (nginx)
@@ -80,31 +82,48 @@ npm run dev:web    # UI  http://localhost:5173
 
 ## Docker
 
+Ordre recommandé :
+
+1. **Pipeline données** (scrape → assign → rapports)  
+2. **Runtime** (API healthy → UI)
+
+### 1. Pipeline données
+
 ```powershell
 docker compose -f backend/deploy/docker-compose.yml build
-docker compose -f backend/deploy/docker-compose.yml run --rm scrape -m nanoka.scrape
+docker compose -f backend/deploy/docker-compose.yml run --rm scrape
 docker compose -f backend/deploy/docker-compose.yml run --rm pipeline -m nanoka.assign
+# ou en une commande :
 docker compose -f backend/deploy/docker-compose.yml --profile full up scrape post-process
 ```
 
+`post-process` attend la **fin réussie** de `scrape`, puis enchaîne :  
+`assign` → `ascension_report` → `weapon_report` → `talent_report`.
+
 Données montées depuis `backend/data` sur l'hôte.
 
-### Frontend (UI statique + nginx)
+### 2. Runtime (API + UI)
 
-Build et run séparés du backend. L'UI proxifie `/api` et `/media` vers l'API (par défaut `http://host.docker.internal:8000`).
+Stack orchestrée (API prête avant le front) :
+
+```powershell
+npm run docker:stack:up    # API :8000 puis UI :8080
+npm run docker:stack:down
+```
+
+API seule :
+
+```powershell
+npm run docker:api
+```
+
+UI seule (API sur l'hôte) :
 
 ```powershell
 npm run docker:web:build
-npm run dev:api   # API sur l'hôte, port 8000
-npm run docker:web:up   # UI http://localhost:8080
+npm run dev:api
+npm run docker:web:up
 ```
-
-Variables utiles (`.env` à côté de `frontend/deploy/docker-compose.yml` ou export) :
-
-- `WEB_PORT` — port hôte (défaut `8080`)
-- `API_UPSTREAM` — URL de l'API (ex. `http://host.docker.internal:8000`)
-
-Image CI : `ghcr.io/<owner>/nanoka-web:latest`
 
 ## Sécurité (Trivy)
 

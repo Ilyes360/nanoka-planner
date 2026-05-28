@@ -1,3 +1,6 @@
+# UI seule (API sur l'hôte ou stack deploy/docker-compose.stack.yml)
+# Pour un ordre garanti API → web, préférer deploy/docker-compose.stack.yml
+
 services:
   web:
     build:

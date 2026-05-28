@@ -1,0 +1,4 @@
+# Override temporaire : scrape instantané pour valider depends_on → post-process
+services:
+  scrape:
+    command: ["-c", "print('scrape stub ok')"]

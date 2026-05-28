@@ -72,15 +72,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push web image
+      - name: Build web image
         uses: docker/build-push-action@v6
         with:
           context: frontend
           file: frontend/deploy/Dockerfile
-          push: true
-          tags: |
-            ghcr.io/${{ steps.ghcr_owner.outputs.owner }}/nanoka-web:latest
-            ghcr.io/${{ steps.ghcr_owner.outputs.owner }}/nanoka-web:${{ github.sha }}
+          push: false
+          load: true
+          tags: ghcr.io/${{ steps.ghcr_owner.outputs.owner }}/nanoka-web:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -92,3 +91,14 @@ jobs:
           severity: CRITICAL
           exit-code: "1"
           trivyignores: frontend/config/trivy/.trivyignore
+
+      - name: Push web image
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          file: frontend/deploy/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ steps.ghcr_owner.outputs.owner }}/nanoka-web:latest
+            ghcr.io/${{ steps.ghcr_owner.outputs.owner }}/nanoka-web:${{ github.sha }}
+          cache-from: type=gha

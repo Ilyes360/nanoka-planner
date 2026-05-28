@@ -63,7 +63,7 @@ Write-Host "`n==> Code + secrets + misconfig" -ForegroundColor Cyan
 & $Trivy fs --config $TrivyConfig --scanners secret,misconfig --severity CRITICAL,HIGH,MEDIUM .
 
 Write-Host "`n==> Docker / compose (misconfig)" -ForegroundColor Cyan
-& $Trivy config --severity CRITICAL,HIGH,MEDIUM deploy/Dockerfile.pipeline deploy/Dockerfile.scraper $ComposeFile
+& $Trivy config --severity CRITICAL,HIGH,MEDIUM deploy/Dockerfile.pipeline deploy/Dockerfile.scraper deploy/Dockerfile.api $ComposeFile
 
 if ($Image) {
     if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {

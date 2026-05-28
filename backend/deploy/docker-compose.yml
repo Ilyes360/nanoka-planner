@@ -1,3 +1,8 @@
+# Pipeline données : scrape → post-process (assign + rapports)
+# Profil "full" : docker compose -f backend/deploy/docker-compose.yml --profile full up
+#
+# Services one-shot : docker compose -f backend/deploy/docker-compose.yml run --rm <service> ...
+
 services:
   scrape:
     build:
@@ -9,6 +14,7 @@ services:
       - ../data:/app/data
     working_dir: /app
     shm_size: "2gb"
+    command: ["-m", "nanoka.scrape"]
 
   pipeline:
     build:
@@ -30,5 +36,28 @@ services:
     volumes:
       - ../data:/app/data
     working_dir: /app
+    entrypoint: ["sh", "-c"]
     command: >
-      sh -c "python -m nanoka.assign && python -m nanoka.ascension_report && python -m nanoka.weapon_report && python -m nanoka.talent_report"
+      python -m nanoka.assign
+      && python -m nanoka.ascension_report
+      && python -m nanoka.weapon_report
+      && python -m nanoka.talent_report
+
+  api:
+    profiles: ["runtime"]
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.api
+    image: nanoka-api:latest
+    user: "1000:1000"
+    volumes:
+      - ../data:/app/data
+    working_dir: /app
+    ports:
+      - "${API_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s

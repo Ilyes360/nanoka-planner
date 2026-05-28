@@ -78,27 +78,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push pipeline image
+      - name: Build pipeline image
         uses: docker/build-push-action@v6
+        id: build_pipeline
         with:
           context: backend
           file: backend/deploy/Dockerfile.pipeline
-          push: true
-          tags: |
-            ghcr.io/${{ steps.ghcr_owner.outputs.owner }}/nanoka-pipeline:latest
-            ghcr.io/${{ steps.ghcr_owner.outputs.owner }}/nanoka-pipeline:${{ github.sha }}
+          push: false
+          load: true
+          tags: ghcr.io/${{ steps.ghcr_owner.outputs.owner }}/nanoka-pipeline:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and push scraper image
+      - name: Build scraper image
         uses: docker/build-push-action@v6
+        id: build_scraper
         with:
           context: backend
           file: backend/deploy/Dockerfile.scraper
-          push: true
-          tags: |
-            ghcr.io/${{ steps.ghcr_owner.outputs.owner }}/nanoka-scraper:latest
-            ghcr.io/${{ steps.ghcr_owner.outputs.owner }}/nanoka-scraper:${{ github.sha }}
+          push: false
+          load: true
+          tags: ghcr.io/${{ steps.ghcr_owner.outputs.owner }}/nanoka-scraper:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -119,3 +119,25 @@ jobs:
           severity: CRITICAL
           exit-code: "1"
           trivyignores: backend/config/trivy/.trivyignore
+
+      - name: Push pipeline image
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          file: backend/deploy/Dockerfile.pipeline
+          push: true
+          tags: |
+            ghcr.io/${{ steps.ghcr_owner.outputs.owner }}/nanoka-pipeline:latest
+            ghcr.io/${{ steps.ghcr_owner.outputs.owner }}/nanoka-pipeline:${{ github.sha }}
+          cache-from: type=gha
+
+      - name: Push scraper image
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          file: backend/deploy/Dockerfile.scraper
+          push: true
+          tags: |
+            ghcr.io/${{ steps.ghcr_owner.outputs.owner }}/nanoka-scraper:latest
+            ghcr.io/${{ steps.ghcr_owner.outputs.owner }}/nanoka-scraper:${{ github.sha }}
+          cache-from: type=gha
