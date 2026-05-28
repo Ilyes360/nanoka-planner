@@ -1,4 +1,4 @@
-.venv/
+backend/.venv/
 __pycache__/
 *.pyc
 .pytest_cache/
@@ -6,17 +6,20 @@ __pycache__/
 .idea/
 .vscode/
 node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
 
 # Rapports de couverture locaux
-.coverage
-coverage.xml
+backend/.coverage
+backend/coverage.xml
 
 # Données volumineuses (générées par le scrape)
-data/raw/*.json
-data/processed/*.json
-data/images/**/*
+backend/data/raw/*.json
+backend/data/processed/*.json
+backend/data/images/**/*
 
 # Conserver la structure des dossiers
-!data/raw/.gitkeep
-!data/processed/.gitkeep
-!data/images/.gitkeep
+!backend/data/raw/.gitkeep
+!backend/data/processed/.gitkeep
+!backend/data/images/.gitkeep

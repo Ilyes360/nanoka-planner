@@ -1,84 +1,121 @@
 # Nanoka scraper (Genshin Impact)
 
-Scrape et post-traitement des données personnages / armes / objets depuis [gi.nanoka.cc](https://gi.nanoka.cc/).
+Scrape et post-traitement des données personnages / armes / objets depuis [gi.nanoka.cc](https://gi.nanoka.cc/), avec interface web de planification.
 
 ## Structure
 
 ```
 python-project/
-├── nanoka/
-│   ├── paths.py              # Chemins data/, fichiers JSON
-│   ├── scrape.py             # Téléchargement API + images
-│   ├── assign.py             # Loadouts + matériaux (used_by)
-│   ├── ascension_report.py   # Rapport ascension personnages
-│   ├── weapon_report.py      # Rapport ascension armes
-│   ├── talent_report.py      # Rapport talents personnages
-│   ├── exp_books.py          # Calcul des livres d'EXP (personnages)
-│   ├── weapon_exp.py         # Calcul des minerais d'EXP (armes)
-│   ├── report_common.py      # Helpers JSON / matériaux / totaux
-│   └── migrate_paths.py      # Correction des chemins d'images
-├── requirements/             # Dépendances pip
-├── config/trivy/             # Scan sécurité Trivy
-├── data/
-│   ├── raw/
-│   ├── processed/
-│   └── images/
-├── tests/
-├── scripts/                  # Scripts utilitaires (ex. trivy-scan.ps1)
-└── deploy/                   # Dockerfiles + docker-compose.yml
+├── backend/
+│   ├── nanoka/               # Package Python (scrape, rapports, API)
+│   ├── requirements/         # Dépendances pip
+│   ├── config/trivy/         # Scan sécurité
+│   ├── data/                 # raw, processed, images
+│   ├── tests/
+│   ├── scripts/
+│   └── deploy/               # Dockerfiles + docker-compose.yml
+└── frontend/                 # Interface web JavaScript (Vite)
+    ├── src/
+    ├── deploy/               # Dockerfile + docker-compose.yml (nginx)
+    ├── config/trivy/         # Scan sécurité frontend
+    └── scripts/              # trivy-scan.ps1
 ```
 
-## Installation
+## Installation (backend)
 
 ```powershell
-cd c:\Users\iyous\python-project
+cd backend
+python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements/requirements.txt
+pip install -r requirements/requirements-dev.txt
 ```
+
+Ne déplacez pas le dossier `.venv` après création (sinon `pip` pointe vers un Python introuvable). En cas d’erreur « fichier spécifié introuvable », supprimez `.venv` et recréez-le avec les commandes ci-dessus.
+
+Depuis la racine du repo, les scripts npm raccourcissent les commandes (`npm run assign`, `npm run dev:api`, etc.).
 
 ## Tests
 
 ```powershell
+cd backend
 pytest
 pytest --cov=nanoka --cov-report=term-missing
 ```
 
-## Utilisation
+Ou : `npm test` depuis la racine (backend). Frontend : `npm run test:web`.
+
+## Tests frontend
 
 ```powershell
-python -m nanoka.scrape
-python -m nanoka.assign
-python -m nanoka.ascension_report --print                  # personnages
-python -m nanoka.weapon_report --weapon Aquila            # armes
-python -m nanoka.talent_report --character Aino           # talents
+cd frontend
+npm install
+npm test
+npm run test:cov
 ```
 
-Test rapide :
+Ou depuis la racine : `npm run test:web`.
+
+## Utilisation (CLI)
 
 ```powershell
-python -m nanoka.scrape --max-characters 3 --max-weapons 3 --max-items 20 --skip-image-download
+cd backend
+python -m nanoka.scrape
 python -m nanoka.assign
+python -m nanoka.ascension_report --print
+python -m nanoka.weapon_report --weapon Aquila
+python -m nanoka.talent_report --character Aino
+```
+
+## Interface web
+
+Prérequis : loadouts dans `backend/data/processed/` (`python -m nanoka.assign` depuis `backend/`).
+
+```powershell
+pip install -r backend/requirements/requirements-dev.txt
+cd frontend && npm install && cd ..
+
+npm run dev:api    # API http://127.0.0.1:8000
+npm run dev:web    # UI  http://localhost:5173
 ```
 
 ## Docker
 
 ```powershell
-docker compose -f deploy/docker-compose.yml build
-docker compose -f deploy/docker-compose.yml run --rm scrape -m nanoka.scrape
-docker compose -f deploy/docker-compose.yml run --rm pipeline -m nanoka.assign
-docker compose -f deploy/docker-compose.yml run --rm pipeline -m nanoka.ascension_report --print
-docker compose -f deploy/docker-compose.yml run --rm pipeline -m nanoka.weapon_report
-docker compose -f deploy/docker-compose.yml run --rm pipeline -m nanoka.talent_report
-docker compose -f deploy/docker-compose.yml --profile full up scrape post-process
+docker compose -f backend/deploy/docker-compose.yml build
+docker compose -f backend/deploy/docker-compose.yml run --rm scrape -m nanoka.scrape
+docker compose -f backend/deploy/docker-compose.yml run --rm pipeline -m nanoka.assign
+docker compose -f backend/deploy/docker-compose.yml --profile full up scrape post-process
 ```
 
-Les données restent dans `./data` sur l'hôte.
+Données montées depuis `backend/data` sur l'hôte.
 
-Via npm (mêmes commandes raccourcies) : `npm run docker:build`, `npm run docker:assign`, etc.
+### Frontend (UI statique + nginx)
+
+Build et run séparés du backend. L'UI proxifie `/api` et `/media` vers l'API (par défaut `http://host.docker.internal:8000`).
+
+```powershell
+npm run docker:web:build
+npm run dev:api   # API sur l'hôte, port 8000
+npm run docker:web:up   # UI http://localhost:8080
+```
+
+Variables utiles (`.env` à côté de `frontend/deploy/docker-compose.yml` ou export) :
+
+- `WEB_PORT` — port hôte (défaut `8080`)
+- `API_UPSTREAM` — URL de l'API (ex. `http://host.docker.internal:8000`)
+
+Image CI : `ghcr.io/<owner>/nanoka-web:latest`
 
 ## Sécurité (Trivy)
 
+Backend :
+
 ```powershell
-.\scripts\trivy-scan.ps1
-npm run security
+npm run security:scan
+```
+
+Frontend :
+
+```powershell
+npm run security:web:scan
 ```
