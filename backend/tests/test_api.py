@@ -13,6 +13,16 @@ from nanoka.media import pick_character_avatar_file as _pick_character_avatar_fi
 from nanoka.media import pick_character_splash_file as _pick_character_splash_file
 
 
+def _patch_data_paths(monkeypatch: pytest.MonkeyPatch, **paths: Path) -> None:
+    from nanoka import data_store, paths as paths_mod
+
+    for name, value in paths.items():
+        monkeypatch.setattr(paths_mod, name, value)
+        if hasattr(data_store, name):
+            monkeypatch.setattr(data_store, name, value)
+    data_store.clear_caches()
+
+
 @pytest.fixture
 def client() -> TestClient:
     return TestClient(app)
@@ -27,17 +37,18 @@ def test_is_displayable_filters_unknown() -> None:
 def test_list_characters_hides_unknown(
     client: TestClient, sample_character_raw: dict, item_lookup, tmp_path: Path, monkeypatch
 ) -> None:
-    from nanoka import assign, paths
+    from nanoka import assign
 
     by_id, by_name = item_lookup
     good = assign.character_loadout(sample_character_raw, by_id, by_name)
     bad = {**good, "name": "Unknown", "id": "99999999", "url": "https://gi.nanoka.cc/character/99999999"}
     loadouts_path = tmp_path / "character_loadouts.json"
     loadouts_path.write_text(json.dumps([good, bad]), encoding="utf-8")
-    monkeypatch.setattr(paths, "CHARACTER_LOADOUTS_JSON", loadouts_path)
-    monkeypatch.setattr("nanoka.api.CHARACTER_LOADOUTS_JSON", loadouts_path)
-    monkeypatch.setattr(paths, "CHARACTER_IMAGES", tmp_path / "images" / "characters")
-    monkeypatch.setattr("nanoka.api.CHARACTER_IMAGES", tmp_path / "images" / "characters")
+    _patch_data_paths(
+        monkeypatch,
+        CHARACTER_LOADOUTS_JSON=loadouts_path,
+        CHARACTER_IMAGES=tmp_path / "images" / "characters",
+    )
 
     data = client.get("/api/characters").json()
     assert len(data) == 1
@@ -71,7 +82,7 @@ def test_pick_character_avatar_prefers_avataricon(tmp_path: Path) -> None:
 def test_list_characters_uses_avatar_icon(
     client: TestClient, sample_character_raw: dict, item_lookup, tmp_path: Path, monkeypatch
 ) -> None:
-    from nanoka import assign, paths
+    from nanoka import assign
 
     by_id, by_name = item_lookup
     loadout = assign.character_loadout(sample_character_raw, by_id, by_name)
@@ -81,12 +92,12 @@ def test_list_characters_uses_avatar_icon(
     char_dir.mkdir(parents=True)
     (char_dir / "001_skill.webp").write_bytes(b"x")
     (char_dir / "002_ui_avataricon_tester.webp").write_bytes(b"x")
-    monkeypatch.setattr(paths, "CHARACTER_LOADOUTS_JSON", loadouts_path)
-    monkeypatch.setattr("nanoka.api.CHARACTER_LOADOUTS_JSON", loadouts_path)
-    monkeypatch.setattr(paths, "CHARACTER_IMAGES", tmp_path / "images" / "characters")
-    monkeypatch.setattr("nanoka.api.CHARACTER_IMAGES", tmp_path / "images" / "characters")
-    monkeypatch.setattr(paths, "IMAGES", tmp_path / "images")
-    monkeypatch.setattr("nanoka.api.IMAGES", tmp_path / "images")
+    _patch_data_paths(
+        monkeypatch,
+        CHARACTER_LOADOUTS_JSON=loadouts_path,
+        CHARACTER_IMAGES=tmp_path / "images" / "characters",
+        IMAGES=tmp_path / "images",
+    )
 
     data = client.get("/api/characters").json()
     assert data[0]["icon_url"] == "/media/characters/10000099_tester/002_ui_avataricon_tester.webp"
@@ -99,17 +110,18 @@ def test_health(client: TestClient) -> None:
 
 
 def test_list_characters(client: TestClient, sample_character_raw: dict, item_lookup, tmp_path: Path, monkeypatch) -> None:
-    from nanoka import assign, paths
+    from nanoka import assign
 
     by_id, by_name = item_lookup
     loadout = assign.character_loadout(sample_character_raw, by_id, by_name)
     loadouts_path = tmp_path / "character_loadouts.json"
     loadouts_path.write_text(json.dumps([loadout]), encoding="utf-8")
-    monkeypatch.setattr(paths, "CHARACTER_LOADOUTS_JSON", loadouts_path)
-    monkeypatch.setattr("nanoka.api.CHARACTER_LOADOUTS_JSON", loadouts_path)
     img_dir = tmp_path / "images" / "characters"
-    monkeypatch.setattr(paths, "CHARACTER_IMAGES", img_dir)
-    monkeypatch.setattr("nanoka.api.CHARACTER_IMAGES", img_dir)
+    _patch_data_paths(
+        monkeypatch,
+        CHARACTER_LOADOUTS_JSON=loadouts_path,
+        CHARACTER_IMAGES=img_dir,
+    )
 
     res = client.get("/api/characters")
     assert res.status_code == 200
@@ -125,18 +137,19 @@ def test_character_detail_404(client: TestClient) -> None:
 def test_character_detail_talent_levels_plan(
     client: TestClient, sample_character_raw: dict, item_lookup, tmp_path: Path, monkeypatch
 ) -> None:
-    from nanoka import assign, paths
+    from nanoka import assign
 
     by_id, by_name = item_lookup
     loadout = assign.character_loadout(sample_character_raw, by_id, by_name)
     loadouts_path = tmp_path / "character_loadouts.json"
     loadouts_path.write_text(json.dumps([loadout]), encoding="utf-8")
-    monkeypatch.setattr(paths, "CHARACTER_LOADOUTS_JSON", loadouts_path)
-    monkeypatch.setattr("nanoka.api.CHARACTER_LOADOUTS_JSON", loadouts_path)
     chars_path = tmp_path / "characters.json"
     chars_path.write_text(json.dumps([sample_character_raw]), encoding="utf-8")
-    monkeypatch.setattr(paths, "CHARACTERS_JSON", chars_path)
-    monkeypatch.setattr("nanoka.api.CHARACTERS_JSON", chars_path)
+    _patch_data_paths(
+        monkeypatch,
+        CHARACTER_LOADOUTS_JSON=loadouts_path,
+        CHARACTERS_JSON=chars_path,
+    )
 
     res = client.get(f"/api/characters/{loadout['id']}?talent_levels=1,1,1")
     assert res.status_code == 200
@@ -150,7 +163,7 @@ def test_character_detail_talent_levels_plan(
 def test_character_detail_includes_profile(
     client: TestClient, sample_character_raw: dict, item_lookup, tmp_path: Path, monkeypatch
 ) -> None:
-    from nanoka import assign, paths
+    from nanoka import assign
 
     raw = dict(sample_character_raw)
     raw["raw_data"] = {
@@ -171,10 +184,11 @@ def test_character_detail_includes_profile(
     loadouts_path.write_text(json.dumps([loadout]), encoding="utf-8")
     chars_path = tmp_path / "characters.json"
     chars_path.write_text(json.dumps([raw]), encoding="utf-8")
-    monkeypatch.setattr(paths, "CHARACTER_LOADOUTS_JSON", loadouts_path)
-    monkeypatch.setattr("nanoka.api.CHARACTER_LOADOUTS_JSON", loadouts_path)
-    monkeypatch.setattr(paths, "CHARACTERS_JSON", chars_path)
-    monkeypatch.setattr("nanoka.api.CHARACTERS_JSON", chars_path)
+    _patch_data_paths(
+        monkeypatch,
+        CHARACTER_LOADOUTS_JSON=loadouts_path,
+        CHARACTERS_JSON=chars_path,
+    )
 
     body = client.get(f"/api/characters/{loadout['id']}").json()
     assert body["title"] == "Test Title"
@@ -189,7 +203,7 @@ def test_character_detail_includes_profile(
 def test_weapon_detail_includes_profile(
     client: TestClient, sample_weapon_raw: dict, item_lookup, tmp_path: Path, monkeypatch
 ) -> None:
-    from nanoka import assign, paths
+    from nanoka import assign
 
     raw = dict(sample_weapon_raw)
     raw["raw_data"] = {
@@ -204,10 +218,11 @@ def test_weapon_detail_includes_profile(
     loadouts_path.write_text(json.dumps([loadout]), encoding="utf-8")
     weapons_path = tmp_path / "weapons.json"
     weapons_path.write_text(json.dumps([raw]), encoding="utf-8")
-    monkeypatch.setattr(paths, "WEAPON_LOADOUTS_JSON", loadouts_path)
-    monkeypatch.setattr("nanoka.api.WEAPON_LOADOUTS_JSON", loadouts_path)
-    monkeypatch.setattr(paths, "WEAPONS_JSON", weapons_path)
-    monkeypatch.setattr("nanoka.api.WEAPONS_JSON", weapons_path)
+    _patch_data_paths(
+        monkeypatch,
+        WEAPON_LOADOUTS_JSON=loadouts_path,
+        WEAPONS_JSON=weapons_path,
+    )
 
     body = client.get(f"/api/weapons/{loadout['id']}").json()
     assert body["weapon_type"] == "Sword"
