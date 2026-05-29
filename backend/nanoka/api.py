@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import os
+from collections.abc import Awaitable, Callable
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.gzip import GZipMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
+from starlette.responses import Response
 
 from nanoka import ascension_report, data_store, talent_report, weapon_report
 from nanoka.paths import (
@@ -19,16 +23,55 @@ from nanoka.paths import (
     IMAGES,
 )
 
+
+def _env_list(name: str, default: list[str]) -> list[str]:
+    """Liste depuis une variable d'env (valeurs separees par des virgules)."""
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
+    return [item.strip() for item in raw.split(",") if item.strip()]
+
+
+# Origines autorisees pour le CORS (dev par defaut ; surchargeable en prod).
+CORS_ALLOW_ORIGINS = _env_list(
+    "CORS_ALLOW_ORIGINS",
+    ["http://localhost:5173", "http://127.0.0.1:5173"],
+)
+# Hotes HTTP acceptes (protection contre le Host header spoofing).
+ALLOWED_HOSTS = _env_list("ALLOWED_HOSTS", ["*"])
+
+# En-tetes de securite appliques a toutes les reponses (API read-only + medias).
+SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "no-referrer",
+    "X-Permitted-Cross-Domain-Policies": "none",
+    "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
+}
+
 app = FastAPI(title="Nanoka Planner API", version="1.0.0")
+
+
+@app.middleware("http")
+async def add_security_headers(
+    request: Request,
+    call_next: Callable[[Request], Awaitable[Response]],
+) -> Response:
+    response = await call_next(request)
+    for header, value in SECURITY_HEADERS.items():
+        response.headers.setdefault(header, value)
+    return response
+
 
 app.add_middleware(GZipMiddleware, minimum_size=500)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=CORS_ALLOW_ORIGINS,
+    allow_credentials=False,
+    allow_methods=["GET", "OPTIONS"],
     allow_headers=["*"],
 )
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
 
 if IMAGES.is_dir():
     app.mount("/media", StaticFiles(directory=str(IMAGES)), name="media")
@@ -37,6 +80,11 @@ if IMAGES.is_dir():
 def _is_displayable(row: dict[str, Any]) -> bool:
     """Exclut les entrees dont le scrape a echoue (nom de secours Unknown)."""
     return str(row.get("name", "")).strip().lower() != "unknown"
+
+
+def _has_planner_data(row: dict[str, Any]) -> bool:
+    """Masque les armes sans donnees exploitables (aucune phase d'ascension)."""
+    return bool(row.get("ascensions"))
 
 
 def _list_summary(kind: str, row: dict[str, Any]) -> dict[str, Any]:
@@ -102,14 +150,18 @@ def get_character(
 
 @app.get("/api/weapons")
 def list_weapons() -> list[dict[str, Any]]:
-    visible = [r for r in data_store.weapon_loadouts() if isinstance(r, dict) and _is_displayable(r)]
+    visible = [
+        r
+        for r in data_store.weapon_loadouts()
+        if isinstance(r, dict) and _is_displayable(r) and _has_planner_data(r)
+    ]
     return sorted([_list_summary("weapon", r) for r in visible], key=lambda x: x["name"].lower())
 
 
 @app.get("/api/weapons/{entity_id}")
 def get_weapon(entity_id: str) -> dict[str, Any]:
     loadout = data_store.weapon_loadout(entity_id)
-    if not loadout or not _is_displayable(loadout):
+    if not loadout or not _is_displayable(loadout) or not _has_planner_data(loadout):
         raise HTTPException(status_code=404, detail="Weapon not found")
 
     level_exp_index = data_store.weapon_level_exp_index()

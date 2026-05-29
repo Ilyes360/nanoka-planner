@@ -111,6 +111,25 @@ def test_health(client: TestClient) -> None:
     assert res.json() == {"status": "ok"}
 
 
+def test_security_headers_present(client: TestClient) -> None:
+    res = client.get("/api/health")
+    assert res.headers["x-content-type-options"] == "nosniff"
+    assert res.headers["x-frame-options"] == "DENY"
+    assert res.headers["referrer-policy"] == "no-referrer"
+    assert "default-src 'none'" in res.headers["content-security-policy"]
+
+
+def test_cors_allows_dev_origin(client: TestClient) -> None:
+    res = client.options(
+        "/api/characters",
+        headers={
+            "Origin": "http://localhost:5173",
+            "Access-Control-Request-Method": "GET",
+        },
+    )
+    assert res.headers.get("access-control-allow-origin") == "http://localhost:5173"
+
+
 def test_list_characters(client: TestClient, sample_character_raw: dict, item_lookup, tmp_path: Path, monkeypatch) -> None:
     from nanoka import assign
 
