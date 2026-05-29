@@ -11,8 +11,8 @@ Scrape et post-traitement des données personnages / armes / objets depuis [gi.n
 Le plus simple est la voie Docker (Chromium pour le scrape est embarqué dans l'image, rien à installer) :
 
 ```powershell
-git clone https://github.com/Ilyes360/python-project.git
-cd python-project
+git clone https://github.com/Ilyes360/nanoka-planner.git
+cd nanoka-planner
 
 # 1. Générer l'intégralité des données : scrape -> assign -> rapports
 #    (Docker Desktop doit être démarré ; opération longue : tout le catalogue est scrapé)
@@ -67,7 +67,7 @@ UI sur http://localhost:8080. Pas besoin de venv ni de Python local dans ce mode
 ## Structure
 
 ```
-python-project/
+nanoka-planner/
 ├── backend/
 │   ├── nanoka/               # Package Python (scrape, rapports, API)
 │   ├── requirements/         # Dépendances pip
