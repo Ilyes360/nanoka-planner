@@ -18,6 +18,13 @@ services:
     working_dir: /app
     ports:
       - "${API_PORT:-8000}:8000"
+    environment:
+      # Origines autorisees pour le CORS (acces direct a l'API :8000 depuis le navigateur).
+      # Via nginx (/api proxifie), l'UI est en meme origine : le CORS ne se declenche pas.
+      CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080}
+      # Hotes HTTP acceptes (anti Host spoofing). En prod, mettre ton domaine
+      # MAIS conserver 127.0.0.1 (utilise par le healthcheck), ex. "mon-domaine.fr,127.0.0.1".
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-*}
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8000/api/health"]
       interval: 10s
