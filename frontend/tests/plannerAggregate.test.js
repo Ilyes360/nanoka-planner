@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   aggregateAscensionReport,
+  aggregateTalentReport,
   aggregateTalentReportDetailed,
   aggregateTalentReportWithLevels,
   mergeMaterialMaps,
@@ -129,5 +130,64 @@ describe("nearestMilestone", () => {
     expect(nearestMilestone(levels, 38)).toBe(40);
     expect(nearestMilestone(levels, 39)).toBe(40);
     expect(nearestMilestone(levels, 1)).toBe(1);
+  });
+});
+
+describe("aggregateAscensionReport — leveling après dernière ascension", () => {
+  const ascWithAfter = {
+    ascensions: [
+      {
+        at_level: 90,
+        mora: 4000,
+        materials: [{ name: "Slime Condensate", count: 6, item_id: "112002" }],
+        leveling: {
+          to_level: 90,
+          mora_cost: 1000,
+          ores: [{ name: "Enhancement Ore", count: 5, item_id: 104011 }],
+        },
+      },
+    ],
+    leveling_after_last_ascension: {
+      to_level: 90,
+      mora_cost: 250,
+      ores: [{ name: "Mystic Enhancement Ore", count: 2, item_id: 104013 }],
+    },
+  };
+
+  it("inclut le bloc final uniquement au niveau 90", () => {
+    const at80 = aggregateAscensionReport(ascWithAfter, 80, "weapon");
+    expect(at80.materials.find((m) => m.name === "Mystic Enhancement Ore")).toBeUndefined();
+
+    const at90 = aggregateAscensionReport(ascWithAfter, 90, "weapon");
+    expect(at90.materials.find((m) => m.name === "Mystic Enhancement Ore").count).toBe(2);
+    expect(at90.levelingMora).toBe(1250);
+  });
+});
+
+describe("aggregateTalentReport (wrapper même niveau)", () => {
+  const report = {
+    talents: [
+      { track: 1, levels: [{ level: 2, mora: 100, materials: [{ name: "Slime", count: 6 }] }] },
+      { track: 2, levels: [{ level: 2, mora: 150, materials: [{ name: "Slime", count: 4 }] }] },
+    ],
+  };
+
+  it("applique le même niveau à toutes les pistes et agrège", () => {
+    const result = aggregateTalentReport(report, 2);
+    expect(result.totalMora).toBe(250);
+    expect(result.ascensionMora).toBe(0);
+    expect(result.levelingMora).toBe(250);
+    expect(result.materials.find((m) => m.name === "Slime").count).toBe(10);
+  });
+});
+
+describe("aggregateTalentReportWithLevels — repli niveau de base", () => {
+  it("retombe sur le niveau de base quand une piste n'a pas de cible", () => {
+    const report = {
+      talents: [{ track: 1, levels: [{ level: 2, mora: 100, materials: [] }] }],
+    };
+    const { tracks, total } = aggregateTalentReportWithLevels(report, {});
+    expect(tracks[0].materials).toHaveLength(0);
+    expect(total.totalMora).toBe(0);
   });
 });

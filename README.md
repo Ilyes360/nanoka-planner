@@ -80,6 +80,7 @@ nanoka-planner/
 │   └── docker-compose.stack.yml   # Stack runtime API → web
 └── frontend/                 # Interface web JavaScript (Vite)
     ├── src/
+    ├── tests/                # Tests Vitest (unitaires, DOM, intégration vues)
     ├── deploy/               # Dockerfile + docker-compose.yml (nginx)
     ├── config/trivy/         # Scan sécurité frontend
     └── scripts/              # trivy-scan.ps1
@@ -126,11 +127,20 @@ Ou : `npm test` depuis la racine (backend). Frontend : `npm run test:web`.
 ```powershell
 cd frontend
 npm install
-npm test
-npm run test:cov
+npm test           # Vitest (vitest run)
+npm run test:cov   # + rapport de couverture v8
 ```
 
-Ou depuis la racine : `npm run test:web`.
+Ou depuis la racine : `npm run test:web` (et `npm run test:web:cov`).
+
+Les tests (`frontend/tests/`, environnement jsdom) couvrent plusieurs niveaux :
+
+- **Unitaires** — utilitaires purs (`utils`, `plannerAggregate`, `materialIcon`, `materialRarity`) et client HTTP (`apiClient`, cache + erreurs).
+- **DOM / composants** — rendu et interactions : `levelSlider` (snapping, clavier), `materialCard`/`materialList`, `levelingBlock`, `ascensionPlanner`, `levelPlanner`, `talentPlanner`, pages personnage/arme.
+- **Intégration de vues** — orchestration `apiClient` + composants pour `characterDetail`, `weaponDetail` et `entityList` (succès, chemin d'erreur, recherche), avec `apiClient` mocké (`vi.mock`).
+- **Routeur** — `router` : résolution des routes, repli sur la home, navigation active, délégation de clic et `popstate`.
+
+Couverture indicative : ~99 % des instructions. Ces tests tournent automatiquement dans la CI frontend (`npm test`).
 
 ## Utilisation (CLI)
 
