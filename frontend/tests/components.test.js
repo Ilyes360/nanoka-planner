@@ -254,10 +254,15 @@ describe("renderCharacterPage", () => {
   };
 
   it("rend nom, chips, avatar et splash", () => {
-    const node = renderCharacterPage(data, [document.createElement("div")]);
+    const node = renderCharacterPage(
+      { ...data, rarity: "5★" },
+      [document.createElement("div")],
+    );
     expect(node.querySelector(".character-page__name").textContent).toBe("Ayaka");
     expect(node.querySelectorAll(".character-page__chip")).toHaveLength(2);
-    expect(node.querySelector("img.character-page__avatar")).not.toBeNull();
+    expect(node.querySelector(".character-page__chip")?.textContent).toBe("Cryo");
+    expect(node.querySelector("img.character-page__chip-icon")?.getAttribute("src")).toContain("Cryo.webp");
+    expect(node.querySelector("img.character-page__avatar.rarity-frame--gold")).not.toBeNull();
     expect(node.querySelector(".character-splash__img")).not.toBeNull();
   });
 
@@ -281,12 +286,14 @@ describe("renderCharacterPage", () => {
 describe("renderWeaponPage", () => {
   it("rend nom, chips et avatar", () => {
     const node = renderWeaponPage(
-      { name: "Mistsplitter", weapon_type: "Sword", rarity: "5", description: "d", icon_url: "/w.webp" },
+      { name: "Mistsplitter", weapon_type: "Sword", rarity: "5★", description: "d", icon_url: "/w.webp" },
       [],
     );
     expect(node.querySelector(".weapon-page__name").textContent).toBe("Mistsplitter");
     expect(node.querySelectorAll(".weapon-page__chip")).toHaveLength(2);
-    expect(node.querySelector("img.weapon-page__avatar")).not.toBeNull();
+    expect(node.querySelector("img.weapon-page__avatar.rarity-frame--gold")).not.toBeNull();
+    expect(node.querySelector(".weapon-page__chip.rarity-frame--gold")?.textContent).toBe("5★");
+    expect(node.querySelector("img.weapon-page__chip-icon")?.getAttribute("src")).toContain("Skill_A_01.webp");
   });
 });
 

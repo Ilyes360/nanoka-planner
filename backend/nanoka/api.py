@@ -90,12 +90,22 @@ def _has_planner_data(row: dict[str, Any]) -> bool:
 def _list_summary(kind: str, row: dict[str, Any]) -> dict[str, Any]:
     eid = str(row.get("id", ""))
     media = data_store.media_for(kind, eid)
-    return {
+    out: dict[str, Any] = {
         "id": eid,
         "name": row.get("name", ""),
         "url": row.get("url", ""),
         "icon_url": media.get("icon_url"),
     }
+    if kind == "character":
+        profile = data_store.character_profiles().get(eid, {})
+        out["element"] = profile.get("element", "")
+        out["weapon_type"] = profile.get("weapon_type", "")
+        out["rarity"] = profile.get("rarity", "")
+    elif kind == "weapon":
+        profile = data_store.weapon_profiles().get(eid, {})
+        out["weapon_type"] = profile.get("weapon_type", "")
+        out["rarity"] = profile.get("rarity", "")
+    return out
 
 
 def _detail_summary(kind: str, row: dict[str, Any]) -> dict[str, Any]:

@@ -160,7 +160,7 @@ def character_profiles() -> dict[str, dict[str, str]]:
     if _CHARACTER_PROFILES is not None and _CHARACTER_PROFILES["mtime"] == mt:
         return _CHARACTER_PROFILES["data"]
 
-    from nanoka.labels import REGION_LABELS, weapon_type_label
+    from nanoka.labels import REGION_LABELS, character_rarity_label, weapon_type_label
 
     index: dict[str, dict[str, str]] = {}
     for row in _cached_list(CHARACTERS_JSON):
@@ -178,6 +178,7 @@ def character_profiles() -> dict[str, dict[str, str]]:
             "vision": str(info.get("vision") or "").strip(),
             "element": str(raw.get("element") or "").strip(),
             "weapon_type": weapon_type_label(str(raw.get("weapon") or "")),
+            "rarity": character_rarity_label(raw.get("rarity")),
             "region": REGION_LABELS.get(region_key, region_key.replace("ASSOC_TYPE_", "").title()),
             "constellation": str(info.get("constellation") or "").strip(),
         }

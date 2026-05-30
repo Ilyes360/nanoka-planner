@@ -64,6 +64,15 @@ npm run docker:stack:down   # pour arrêter
 
 UI sur http://localhost:8080. Pas besoin de venv ni de Python local dans ce mode.
 
+### Listes personnages / armes
+
+Les pages **Characters** et **Weapons** proposent une recherche par nom et des filtres par puces :
+
+- **Personnages** : élément, type d'arme, rareté (4★ / 5★).
+- **Armes** : type, rareté (1★ à 5★).
+
+Plusieurs puces d'un même groupe se combinent en **OU** ; les groupes entre eux se combinent en **ET** (ex. Cryo + Sword → personnages Cryo maniant une épée).
+
 ## Structure
 
 ```

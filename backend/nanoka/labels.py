@@ -41,3 +41,19 @@ def rarity_label(value: Any) -> str:
     if 1 <= stars <= 5:
         return f"{stars}★"
     return str(value).strip()
+
+
+CHARACTER_RARITY_LABELS: dict[str, str] = {
+    "QUALITY_ORANGE": "5★",
+    "QUALITY_ORANGE_SP": "5★",
+    "QUALITY_PURPLE": "4★",
+}
+
+
+def character_rarity_label(value: Any) -> str:
+    key = str(value or "").strip()
+    if not key:
+        return ""
+    if key in CHARACTER_RARITY_LABELS:
+        return CHARACTER_RARITY_LABELS[key]
+    return rarity_label(value)

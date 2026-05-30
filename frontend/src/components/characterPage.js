@@ -1,9 +1,7 @@
 import { el } from "../utils.js";
-
-function metaChip(text) {
-  if (!text) return null;
-  return el("span", { className: "character-page__chip", text });
-}
+import { elementIconUrl } from "../utils/elementIcon.js";
+import { plannerAvatarClass } from "../utils/entityRarity.js";
+import { renderProfileChip, renderWeaponTypeChip } from "./profileChip.js";
 
 function renderSplashBlock(data) {
   const src = data.splash_url || data.icon_url;
@@ -26,7 +24,7 @@ function renderProfileHeader(data) {
   const chips = el(
     "div",
     { className: "character-page__chips" },
-    [metaChip(data.element), metaChip(data.weapon_type)].filter(Boolean),
+    [renderProfileChip(data.element, { baseClass: "character-page__chip", iconUrl: elementIconUrl(data.element) }), renderWeaponTypeChip(data.weapon_type, "character-page__chip")].filter(Boolean),
   );
 
   const identity = el("div", { className: "character-page__identity" }, [
@@ -42,7 +40,7 @@ function renderProfileHeader(data) {
   if (data.icon_url) {
     head.prepend(
       el("img", {
-        className: "character-page__avatar",
+        className: plannerAvatarClass("character-page__avatar", data.rarity),
         src: data.icon_url,
         alt: "",
         width: "112",

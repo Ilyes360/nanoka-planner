@@ -192,6 +192,7 @@ def test_character_detail_includes_profile(
         "desc": "A test character.",
         "element": "Geo",
         "weapon": "WEAPON_SWORD_ONE_HAND",
+        "rarity": "QUALITY_ORANGE",
         "chara_info": {
             "title": "Test Title",
             "vision": "Geo",
@@ -216,6 +217,7 @@ def test_character_detail_includes_profile(
     assert body["vision"] == "Geo"
     assert body["element"] == "Geo"
     assert body["weapon_type"] == "Sword"
+    assert body["rarity"] == "5★"
     assert body["region"] == "Liyue"
     assert body["constellation"] == "Test Const"
     assert "test character" in body["description"].lower()
@@ -249,3 +251,61 @@ def test_weapon_detail_includes_profile(
     assert body["weapon_type"] == "Sword"
     assert body["rarity"] == "4★"
     assert "test weapon" in body["description"].lower()
+
+
+def test_list_characters_includes_filter_fields(
+    client: TestClient, sample_character_raw: dict, item_lookup, tmp_path: Path, monkeypatch
+) -> None:
+    from nanoka import assign
+
+    raw = dict(sample_character_raw)
+    raw["raw_data"] = {
+        **raw["raw_data"],
+        "element": "Cryo",
+        "weapon": "WEAPON_BOW",
+        "rarity": "QUALITY_PURPLE",
+    }
+    by_id, by_name = item_lookup
+    loadout = assign.character_loadout(raw, by_id, by_name)
+    loadouts_path = tmp_path / "character_loadouts.json"
+    loadouts_path.write_text(json.dumps([loadout]), encoding="utf-8")
+    chars_path = tmp_path / "characters.json"
+    chars_path.write_text(json.dumps([raw]), encoding="utf-8")
+    _patch_data_paths(
+        monkeypatch,
+        CHARACTER_LOADOUTS_JSON=loadouts_path,
+        CHARACTERS_JSON=chars_path,
+    )
+
+    row = client.get("/api/characters").json()[0]
+    assert row["element"] == "Cryo"
+    assert row["weapon_type"] == "Bow"
+    assert row["rarity"] == "4★"
+
+
+def test_list_weapons_includes_filter_fields(
+    client: TestClient, sample_weapon_raw: dict, item_lookup, tmp_path: Path, monkeypatch
+) -> None:
+    from nanoka import assign
+
+    raw = dict(sample_weapon_raw)
+    raw["raw_data"] = {
+        **raw["raw_data"],
+        "weapon_type": "WEAPON_CLAYMORE",
+        "rarity": 5,
+    }
+    by_id, by_name = item_lookup
+    loadout = assign.weapon_loadout(raw, by_id, by_name)
+    loadouts_path = tmp_path / "weapon_loadouts.json"
+    loadouts_path.write_text(json.dumps([loadout]), encoding="utf-8")
+    weapons_path = tmp_path / "weapons.json"
+    weapons_path.write_text(json.dumps([raw]), encoding="utf-8")
+    _patch_data_paths(
+        monkeypatch,
+        WEAPON_LOADOUTS_JSON=loadouts_path,
+        WEAPONS_JSON=weapons_path,
+    )
+
+    row = client.get("/api/weapons").json()[0]
+    assert row["weapon_type"] == "Claymore"
+    assert row["rarity"] == "5★"

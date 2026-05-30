@@ -1,15 +1,26 @@
 import { apiClient } from "../apiClient.js";
-import { el, filterByName } from "../utils.js";
+import { renderEntityFilters } from "../components/entityFilters.js";
+import { el } from "../utils.js";
+import {
+  CHARACTER_FILTER_GROUPS,
+  emptyFilterState,
+  filterEntities,
+  WEAPON_FILTER_GROUPS,
+} from "../utils/entityFilters.js";
+import { entityIconRarityClass } from "../utils/entityRarity.js";
 
 function renderEntityCard(entity, linkPrefix) {
   const iconChild = entity.icon_url
     ? el("img", { src: entity.icon_url, alt: "", loading: "lazy" })
     : el("span", { className: "entity-card__placeholder", text: entity.name.charAt(0) });
 
+  const rarityClass = entityIconRarityClass(entity.rarity);
+  const iconClassName = rarityClass ? `entity-card__icon ${rarityClass}` : "entity-card__icon";
+
   const card = el(
     "a",
     { href: `${linkPrefix}/${entity.id}`, className: "entity-card", "data-link": "" },
-    [el("div", { className: "entity-card__icon" }, [iconChild]), el("span", { className: "entity-card__name", text: entity.name })],
+    [el("div", { className: iconClassName }, [iconChild]), el("span", { className: "entity-card__name", text: entity.name })],
   );
 
   card.addEventListener("mouseenter", () => {
@@ -20,7 +31,48 @@ function renderEntityCard(entity, linkPrefix) {
   return card;
 }
 
-export async function renderEntityList(container, { title, placeholder, load, linkPrefix }) {
+function renderSearchField(placeholder, onQueryChange) {
+  let query = "";
+
+  const input = el("input", {
+    type: "search",
+    className: "search",
+    placeholder,
+    autocomplete: "off",
+    spellcheck: "false",
+    onInput: () => {
+      query = input.value;
+      onQueryChange(query);
+    },
+  });
+
+  const clearBtn = el("button", {
+    type: "button",
+    className: "search-field__clear",
+    "aria-label": "Clear search",
+    text: "×",
+    hidden: "true",
+    onClick: () => {
+      query = "";
+      input.value = "";
+      input.focus();
+      onQueryChange(query);
+    },
+  });
+
+  const field = el("div", { className: "search-field" }, [input, clearBtn]);
+
+  function sync(queryValue) {
+    query = queryValue;
+    const active = query.trim().length > 0;
+    field.classList.toggle("search-field--active", active);
+    clearBtn.toggleAttribute("hidden", !active);
+  }
+
+  return { field, input, sync, getQuery: () => query };
+}
+
+export async function renderEntityList(container, { title, placeholder, load, linkPrefix, filterGroups = [] }) {
   container.replaceChildren(el("p", { className: "status", text: "Loading…" }));
 
   let items = [];
@@ -36,41 +88,67 @@ export async function renderEntityList(container, { title, placeholder, load, li
     return;
   }
 
-  let query = "";
+  let selectedFilters = emptyFilterState(filterGroups);
+  const filterKeys = filterGroups.map((group) => group.key);
 
-  function paint() {
-    const filtered = filterByName(items, query);
-    const grid = el(
-      "div",
-      { className: "entity-grid" },
-      filtered.map((entity) => renderEntityCard(entity, linkPrefix)),
-    );
+  const countEl = el("p", { className: "muted list-count" });
+  const gridEl = el("div", { className: "entity-grid" });
+  const emptyEl = el("p", { className: "muted list-empty", text: "No results.", hidden: "true" });
+  const filtersSlot = el("div", { className: "list-toolbar__filters" });
 
-    const root = el("div", { className: "list-page" }, [
-      el("header", { className: "page-header" }, [
-        el("h1", { text: title }),
-        el("input", {
-          type: "search",
-          className: "search",
-          placeholder,
-          value: query,
-          onInput: (e) => {
-            query = e.target.value;
-            paint();
-          },
-        }),
-      ]),
-      el("p", { className: "muted list-count", text: `${filtered.length} / ${items.length}` }),
-      grid,
-    ]);
+  const search = renderSearchField(placeholder, (query) => {
+    search.sync(query);
+    updateResults();
+  });
 
-    if (!filtered.length) {
-      root.append(el("p", { className: "muted", text: "No results." }));
-    }
-    container.replaceChildren(root);
+  const toolbar = el("div", { className: "list-toolbar" }, [search.field]);
+  if (filterGroups.length) toolbar.append(filtersSlot);
+
+  const root = el("div", { className: "list-page" }, [
+    el("header", { className: "page-header" }, [
+      el("h1", { text: title }),
+      toolbar,
+    ]),
+    countEl,
+    gridEl,
+    emptyEl,
+  ]);
+
+  container.replaceChildren(root);
+
+  function renderFilters() {
+    if (!filterGroups.length) return;
+    const filters = renderEntityFilters({
+      groups: filterGroups,
+      items,
+      selected: selectedFilters,
+      onChange: (next) => {
+        selectedFilters = next;
+        updateResults();
+        renderFilters();
+      },
+    });
+    filtersSlot.replaceChildren(filters ?? []);
   }
 
-  paint();
+  function updateResults() {
+    const query = search.getQuery();
+    const filtered = filterEntities(items, { query, selectedFilters, filterKeys });
+
+    countEl.textContent = `${filtered.length} / ${items.length}`;
+    countEl.classList.toggle("list-count--filtered", filtered.length !== items.length);
+
+    gridEl.replaceChildren(...filtered.map((entity) => renderEntityCard(entity, linkPrefix)));
+
+    if (filtered.length) {
+      emptyEl.setAttribute("hidden", "true");
+    } else {
+      emptyEl.removeAttribute("hidden");
+    }
+  }
+
+  renderFilters();
+  updateResults();
 }
 
 export function charactersList(container) {
@@ -79,6 +157,7 @@ export function charactersList(container) {
     placeholder: "Search for a character…",
     load: () => apiClient.characters(),
     linkPrefix: "/characters",
+    filterGroups: CHARACTER_FILTER_GROUPS,
   });
 }
 
@@ -88,5 +167,6 @@ export function weaponsList(container) {
     placeholder: "Search for a weapon…",
     load: () => apiClient.weapons(),
     linkPrefix: "/weapons",
+    filterGroups: WEAPON_FILTER_GROUPS,
   });
 }

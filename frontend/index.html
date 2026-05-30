@@ -11,6 +11,12 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/src/index.css" />
+    <script>
+      try {
+        var t = localStorage.getItem("nanoka-background");
+        if (t) document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div class="app">
@@ -20,6 +26,7 @@
           <a href="/characters" data-link>Characters</a>
           <a href="/weapons" data-link>Weapons</a>
         </nav>
+        <div class="theme-picker" id="theme-picker"></div>
       </header>
       <main id="app" class="main"></main>
     </div>
